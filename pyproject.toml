@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "advanced-mlops-project"
+version = "0.1.0"
+description = "Study project on MLOps discipline"
+authors = ["dmitrii.bulghakov@bk.com"]
+license = "Apache License 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.10.*"
+pandas = "^2.1.3"
+numpy = "^1.26.2"
+scikit-learn = "^1.3.2"
+pydantic = "^2.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
