@@ -2,7 +2,7 @@
 name = "advanced-mlops-project"
 version = "0.1.0"
 description = "Study project on MLOps discipline"
-authors = ["dmitrii.bulghakov@bk.com"]
+authors = ["dsbugakovv <dmitrii.bulghakov@bk.com>"]
 license = "Apache License 2.0"
 readme = "README.md"
 
