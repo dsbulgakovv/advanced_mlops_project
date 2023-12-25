@@ -1,0 +1,19 @@
+params:
+    # Path to a directory with image dataset and subfolders for training, validation and final testing
+    data_path: "data"
+    # Number of threads for data loader
+    num_workers: 4
+    # Image size: even though image sizes are bigger than 64, we use this to speed up training
+    size_h: 96
+    size_w: 96
+    # Number of classes in the dataset
+    num_classes: 2
+    # Epochs: number of passes over the training data, we use it this small to reduce training babysitting time
+    epoch_num: 30
+    # Batch size: for batch gradient descent optimization, usually selected as 2**K elements
+    batch_size: 256
+    # Images mean and std channelwise
+    image_mean: [0.485, 0.456, 0.406]
+    image_std: [0.229, 0.224, 0.225]
+    # Last layer (embeddings) size for CNN models
+    embedding_size: 128
