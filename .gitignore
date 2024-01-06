@@ -163,4 +163,6 @@ cython_debug/
 /notebooks
 /data
 /img
+/outputs
+/saved_models
 *.md.backup
