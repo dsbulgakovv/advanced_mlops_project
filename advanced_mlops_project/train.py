@@ -28,8 +28,6 @@ def compute_loss(model, data_batch, loss_function=nn.CrossEntropyLoss()):
 def train_model(
     device,
     model,
-    batch_size,
-    n_train,
     train_batch_generator,
     val_batch_generator,
     opt,
@@ -69,7 +67,14 @@ def train_model(
             train_loss.append(loss.detach().cpu().numpy())
 
         # Evaluation phase
-        metric_results = test_model(model, val_batch_generator, subset_name="val")
+        metric_results = test_model(
+            device=device,
+            loss_function=nn.CrossEntropyLoss(),
+            model=model,
+            batch_generator_f=val_batch_generator,
+            subset_name="val",
+            print_log=False,
+        )
         metric_results = get_score_distributions(metric_results)
 
         # Logging
@@ -77,15 +82,16 @@ def train_model(
         val_loss_idx.append(len(train_loss))
         val_loss.append(val_loss_value)
 
-        # print("Epoch {} of {} took {:.3f}s".format(epoch + 1, n_epochs, time.time() - start_time))
-        train_loss_value = np.mean(train_loss[(-n_train // batch_size) :])  # noqa: E203
         val_accuracy_value = metric_results["accuracy"]
 
         metrics_dict["epoch_" + str(epoch)] = {
             "start_time": start_time,
-            "metric_results": metric_results,
+            "metric_results": {
+                "accuracy": metric_results["accuracy"],
+                "f1-score": metric_results["f1-score"],
+                "loss": metric_results["loss"],
+            },
             "val_loss_value": val_loss_value,
-            "train_loss_value": train_loss_value,
         }
 
         if val_accuracy_value > top_val_accuracy and ckpt_name is not None:
@@ -118,7 +124,8 @@ def test_model(
         labels = y_batch.numpy().tolist()
 
         # compute loss value
-        loss = loss_function(logits, y_batch.to(device))
+        loss = loss_function
+        loss = loss(logits, y_batch.to(device))
 
         # save the necessary data
         loss_list.append(loss.detach().cpu().numpy().tolist())
@@ -145,7 +152,10 @@ def main(cfg) -> None:
         cfg.data.data_path, transformer
     )
     train_batch_gen = batch_generator(
-        train_dataset, cfg.nn.batch_size, cfg.hardware.num_workers
+        train_dataset,
+        batch_size=cfg.nn.batch_size,
+        shuffle=True,
+        num_workers=cfg.hardware.num_workers,
     )
     test_batch_gen = batch_generator(
         test_dataset, cfg.nn.batch_size, cfg.hardware.num_workers
@@ -155,21 +165,19 @@ def main(cfg) -> None:
     )
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = FullyConnectedNeuralNetwork(
-        cfg.img.size_h, cfg.img.size_w, cfg.img.embedding_size, cfg.img.num_classes
+        cfg.img.size_h, cfg.img.size_w, cfg.nn.embedding_size, cfg.data.num_classes
     ).model
 
     # train on mini-batches
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     opt.zero_grad()
     ckpt_path = cfg.data.ckpt_path
-    os.mkdir(ckpt_path)
+    os.makedirs(ckpt_path + "metrics", exist_ok=True)
     ckpt_name = ckpt_path + "model_base.ckpt"
     model = model.to(device)
     metrics_dict = train_model(
         device=device,
         model=model,
-        batch_size=cfg.nn.batch_size,
-        n_train=n_train,
         train_batch_generator=train_batch_gen,
         val_batch_generator=val_batch_gen,
         opt=opt,
@@ -183,17 +191,34 @@ def main(cfg) -> None:
 
     torch.save(best_model.state_dict(), cfg.data.ckpt_path + "best_model.pt")
 
-    val_stats = test_model(best_model, val_batch_gen, "val")
-    test_stats = test_model(best_model, test_batch_gen, "test")
+    val_stats = test_model(
+        device=device,
+        loss_function=nn.CrossEntropyLoss(),
+        model=best_model,
+        batch_generator_f=val_batch_gen,
+        subset_name="val",
+        print_log=False,
+    )
+    test_stats = test_model(
+        device=device,
+        loss_function=nn.CrossEntropyLoss(),
+        model=best_model,
+        batch_generator_f=test_batch_gen,
+        subset_name="test",
+        print_log=False,
+    )
 
-    os.mkdir(cfg.data.ckpt_path + "metrics")
+    val_stats.pop("labels")
+    val_stats.pop("scores")
     with open(
         cfg.data.ckpt_path + "metrics/" + "val_stats.json", "w", encoding="utf-8"
     ) as f:
         json.dump(val_stats, f, ensure_ascii=False, indent=4)
 
+    test_stats.pop("labels")
+    test_stats.pop("scores")
     with open(
-        cfg.data.ckpt_path + "metrics/" + "val_stats.json", "w", encoding="utf-8"
+        cfg.data.ckpt_path + "metrics/" + "test_stats.json", "w", encoding="utf-8"
     ) as f:
         json.dump(test_stats, f, ensure_ascii=False, indent=4)
 

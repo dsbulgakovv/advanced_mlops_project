@@ -37,9 +37,9 @@ def load_data(data_path, transformer):
     return train_dataset, val_dataset, test_dataset, n_train, n_val, n_test
 
 
-def batch_generator(dataset, batch_size, num_workers):
-    batch_gen = torch.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers
+def batch_generator(dataset, batch_size, num_workers, shuffle=True):
+    batch_gen = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers
     )
 
     return batch_gen
