@@ -6,7 +6,7 @@ data:
     data_path: "data"
     # Number of classes in the dataset
     num_classes: 2
-    ckpt_path: "saved_models/"
+    ckpt_path: "data/saved_models/"
 img:
     # Image size: even though image sizes are bigger than 64, we use this to speed up training
     size_h: 96
