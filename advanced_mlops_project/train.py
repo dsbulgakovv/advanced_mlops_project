@@ -3,9 +3,11 @@ import os
 import time
 
 import hydra
+import mlflow
 import numpy as np
 import torch
 import torch.nn as nn
+from hydra import utils
 from metrics import calculate_metrics, get_score_distributions
 from nn_model import FullyConnectedNeuralNetwork
 from utils import batch_generator, load_data, make_transformer_image
@@ -168,6 +170,21 @@ def main(cfg) -> None:
         cfg.img.size_h, cfg.img.size_w, cfg.nn.embedding_size, cfg.data.num_classes
     ).model
 
+    mlflow.set_tracking_uri("file://" + utils.get_original_cwd() + "/mlflow_runs")
+    print("file://" + utils.get_original_cwd() + "/mlflow_runs")
+    experiment_id = mlflow.get_experiment_by_name("catdog_nn")
+    if not experiment_id:
+        experiment_id = mlflow.create_experiment("catdog_nn")
+        mlflow.set_experiment("catdog_nn")
+    else:
+        current_experiment = dict(experiment_id)
+        experiment_id = current_experiment["experiment_id"]
+
+    mlflow.start_run(experiment_id=experiment_id)
+    mlflow.log_param("embedding_size", cfg.nn.embedding_size)
+    mlflow.log_param("batch_size", cfg.nn.batch_size)
+    mlflow.log_param("epoch", cfg.nn.epoch_num)
+
     # train on mini-batches
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
     opt.zero_grad()
@@ -214,6 +231,10 @@ def main(cfg) -> None:
         cfg.data.ckpt_path + "metrics/" + "val_stats.json", "w", encoding="utf-8"
     ) as f:
         json.dump(val_stats, f, ensure_ascii=False, indent=4)
+    for step, loss in enumerate(val_stats["loss"]):
+        mlflow.log_metric("val_loss", loss, step=step)
+    mlflow.log_metric("val_accuracy", val_stats["accuracy"])
+    mlflow.log_metric("val_f1-score", val_stats["f1-score"])
 
     test_stats.pop("labels")
     test_stats.pop("scores")
@@ -221,11 +242,17 @@ def main(cfg) -> None:
         cfg.data.ckpt_path + "metrics/" + "test_stats.json", "w", encoding="utf-8"
     ) as f:
         json.dump(test_stats, f, ensure_ascii=False, indent=4)
+    # for step, loss in enumerate(test_stats['loss']):
+    #     mlflow.log_metric('test_loss', loss, step=step)
+    # mlflow.log_metric('test_accuracy', test_stats['accuracy'])
+    # mlflow.log_metric('test_f1-score', test_stats['f1-score'])
 
     with open(
         cfg.data.ckpt_path + "metrics/" + "metrics_dict.json", "w", encoding="utf-8"
     ) as f:
         json.dump(metrics_dict, f, ensure_ascii=False, indent=4)
+
+    mlflow.end_run()
 
     pass
 
