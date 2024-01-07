@@ -189,7 +189,7 @@ def main(cfg) -> None:
     with open(ckpt_name, "rb") as f:
         best_model = torch.load(f)
 
-    torch.save(best_model.state_dict(), cfg.data.ckpt_path + "best_model.pt")
+    torch.save(best_model.state_dict(), cfg.data.ckpt_path + cfg.data.best_model_file)
 
     val_stats = test_model(
         device=device,

@@ -7,6 +7,8 @@ data:
     # Number of classes in the dataset
     num_classes: 2
     ckpt_path: "data/saved_models/"
+    best_model_file: "best_model.pt"
+    inference_file: "inference_results.csv"
 img:
     # Image size: even though image sizes are bigger than 64, we use this to speed up training
     size_h: 96
