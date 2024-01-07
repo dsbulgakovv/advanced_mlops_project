@@ -1,6 +1,7 @@
 hardware:
     # Number of threads for data loader
     num_workers: 4
+    mlflow_command: "mlflow server --backend-store-uri file:///home/dsbulgako1/my_repos/advanced_mlops_project/advanced_mlops_project/mlflow_runs --default-artifact-root file:///home/dsbulgako1/my_repos/advanced_mlops_project/mlruns --host 128.0.1.1 --port 8080"
 data:
     # Path to a directory with image dataset and subfolders for training, validation and final testing
     data_path: "data"

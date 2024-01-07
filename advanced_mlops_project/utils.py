@@ -24,13 +24,13 @@ def make_transformer_image(size_h, size_w, image_mean, image_std):
 def load_data(data_path, transformer):
     # load dataset using torchvision.datasets.ImageFolder
     train_dataset = torchvision.datasets.ImageFolder(
-        os.path.join(data_path, "train_11k"), transform=transformer
+        os.path.join("../", data_path, "train_11k"), transform=transformer
     )
     val_dataset = torchvision.datasets.ImageFolder(
-        os.path.join(data_path, "val"), transform=transformer
+        os.path.join("../", data_path, "val"), transform=transformer
     )
     test_dataset = torchvision.datasets.ImageFolder(
-        os.path.join(data_path, "test_labeled"), transform=transformer
+        os.path.join("../", data_path, "test_labeled"), transform=transformer
     )
     n_train, n_val, n_test = len(train_dataset), len(val_dataset), len(test_dataset)
 
